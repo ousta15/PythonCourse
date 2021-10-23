@@ -1,12 +1,22 @@
+import random
+from collections import defaultdict
+
 class Portfolio():
     def __init__(self,cash=0):
         self.cash = cash
-        self.stocks = {}
-        self.funds = []
+        self.stocks = defaultdict(list)
+        self.funds = {}
         self.hist = []
 
     def __str__(self):
-        return "cash: $"+str(self.cash)
+        a = "cash: $" + str(self.cash)
+        b = "\nStocks: "
+        for keys,values in self.stocks.items():
+            b+=str(values[0])+" "+keys+"\n"
+        c = "Mutual funds: "
+        for keys,values in self.funds.items():
+            c+=str(values)+" "+keys+"\n"
+        return a+b+c
 
     def addCash(self,amount):
         self.cash = self.cash + amount
@@ -20,14 +30,15 @@ class Portfolio():
         self.cash = self.cash - amount * stock.price
         keys = self.stocks.keys()
         if stock.symbol in keys:
-            self.stocks[stock.symbol] += amount
+            self.stocks[stock.symbol][0] += amount
         else:
-             self.stocks[stock.symbol] = amount
+             self.stocks[stock.symbol].append(amount)
+             self.stocks[stock.symbol].append(stock.price)
         self.hist.append("Bought " + str(amount) + " shares of " + stock.symbol)
 
     def buyMutualFund(self, amount,fund):
         self.cash = self.cash - amount
-        keys = self.stocks.keys()
+        keys = self.funds.keys()
         if fund.symbol in keys:
             self.funds[fund.symbol] += amount
         else:
@@ -38,22 +49,34 @@ class Portfolio():
         for i in range(len(self.hist)):
             print(self.hist[i])
 
-    '''''
-    def sellStock(self,amount,symbol):
-        self.cash = self.cash + amount *
+
+    def sellStock(self,symbol,amount):
         keys = self.stocks.keys()
-        if self.stocks[symbol] > amount:
-            self.stocks[symbol] -= amount
+        if symbol in keys and self.stocks[symbol][0]>=amount:
+            self.cash = self.cash + amount * self.stocks[symbol][1] * random.uniform(0.9, 1.2)
+            if self.stocks[symbol][0] > amount:
+                self.stocks[symbol][0] -= amount
+            else:
+                self.stocks.pop(symbol)
+            self.hist.append("Sold " + str(amount) + " shares of " + symbol)
         else:
-            self.stocks[fund.symbol] = amount
+            print("You do not have enough shares of "+symbol)
 
 
-    def sellMutualFund(self, amount,symbol):
-
-        self.cash = self.cash + amount
+    def sellMutualFund(self, symbol,amount):
+        keys = self.funds.keys()
+        if symbol in keys and self.funds[symbol] >= amount:
+            self.cash = self.cash + amount * random.uniform(0.9, 1.2)
+            if self.funds[symbol] > amount:
+                self.funds[symbol] -= amount
+            else:
+                self.funds.pop(symbol)
+            self.hist.append("Sold " + str(amount) + " shares of " + symbol)
+        else:
+            print("You do not have enough shares of "+symbol)
 
         
-    '''''
+
 class Stock():
     def __init__(self,price,symbol):
         self.price = price
@@ -72,10 +95,9 @@ mf2 = MutualFund("GHT") #Create MF with symbol "GHT"
 portfolio.buyMutualFund(10.3, mf1) #Buys 10.3 shares of "BRT"
 portfolio.buyMutualFund(2, mf2) #Buys 2 shares of "GHT"
 print(portfolio) #Prints portfolio
-#portfolio.sellMutualFund("BRT", 3) #Sells 3 shares of BRT
-#portfolio.sellStock("HFH", 1) #Sells 1 share of HFH
+portfolio.sellMutualFund("BRT", 3) #Sells 3 shares of BRT
+portfolio.sellStock("HFH", 1) #Sells 1 share of HFH
 portfolio.withdrawCash(50) #Removes $50
 portfolio.history() #Prints a list of all transactions
-#ordered by time
 
 
