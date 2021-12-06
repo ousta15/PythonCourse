@@ -1,11 +1,14 @@
 from linearReg import linearReg
 import numpy as np
+import wbdata
+
+indicators_x = {"SL.TLF.TOTL.FE.ZS": "female_labor_force", "SP.ADO.TFRT": "adolescent_fertility_rate"}
+indicator_y = {'SE.ENR.PRIM.FM.ZS': "School_enrollment_GPI"}
+X = wbdata.get_dataframe(indicators_x, country="TUR", convert_date=True)
+y = wbdata.get_dataframe(indicators_x, country="TUR", convert_date=True)
 
 
-X = np.array([[3,4],[6,7],[4,6],[7,3],[3,7]])
 
-Y = np.array([4,5,3,8,9])
-
-b = linearReg(X,Y)
+b = linearReg(X,y)
 
 print(b)
