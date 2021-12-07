@@ -1,30 +1,42 @@
 import numpy as np, pandas as pd
+from scipy.stats import t
 
 def linearReg(X,y):
-    X = X.to_numpy()
-    y = y.to_numpy()
 
     if len(X) == len(y):
 
-        X = np.hstack((np.ones(len(X)).reshape(len(X),1),X))
+        total = pd.concat([X, y], axis=1)
+        total = total.dropna()
 
-        beta = np.matmul(np.matmul(np.linalg.inv(np.matmul(np.transpose(X),X)),np.transpose(X)),y)
-        yhat = np.matmul(X,beta)
-        e = y - yhat
-        e_var = np.matmul(np.transpose(e),e) / (len(y)-len(X[0])-1)
-        b_var = np.diag(e_var*np.linalg.inv(np.matmul(np.transpose(X),X)))
-        b_std_error = np.sqrt(b_var)
-        t_stat = beta / b_std_error
+        if len(total)>0:
 
-        results = np.vstack((beta,b_std_error,t_stat)).transpose()
+            X = total.iloc[:,:-1].to_numpy()
+            y = total.iloc[:,-1:].to_numpy()
 
-        df_results = pd.DataFrame(results,columns=["beta","std_err","t_stat"])
-        df_results["[0.025"] = df_results["t_stat"] - 1.96*df_results["std_err"]
-        df_results["0.975]"] = df_results["t_stat"] + 1.96 * df_results["std_err"]
+            X = np.hstack((np.ones(len(X)).reshape(len(X),1),X))
 
-        return df_results
+            beta = np.matmul(np.matmul(np.linalg.inv(np.matmul(np.transpose(X),X)),np.transpose(X)),y)
+            yhat = np.matmul(X,beta)
+            beta = beta.reshape(1,-1)
+            e = y - yhat
+            e_var = np.matmul(np.transpose(e),e) / (len(y)-len(X[0])-1)
+            b_var = np.diag(e_var*np.linalg.inv(np.matmul(np.transpose(X),X)))
+            b_std_error = np.sqrt(b_var)
+            t_stat = np.abs(beta / b_std_error)
+
+            results = (np.vstack((beta,b_std_error,t_stat)).transpose())
+
+            df_results = pd.DataFrame(results,columns=["coef","std_err","t_stat"]).round(2)
+            df_results["p_value"] = t.cdf(-abs(df_results["t_stat"]), len(X)-2).round(2)
+            df_results["[0.025"] = df_results["coef"] - 1.96 * df_results["std_err"]
+            df_results["0.975]"] = df_results["coef"] + 1.96 * df_results["std_err"]
+
+
+            return df_results
+
+        else: return "All rows contain at least one NAN value."
 
     else:
-        raise Exception("Number of rows of X and y should be the same.")
+        return "Number of rows of X and y should be the same."
 
 
