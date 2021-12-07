@@ -9,7 +9,12 @@ X1 = wbdata.get_dataframe(indicator_x, country="TUR", convert_date=True)
 X2 = wbdata.get_dataframe(indicators_x, country="TUR", convert_date=True)
 y = wbdata.get_dataframe(indicator_y, country="TUR", convert_date=True)
 
-linearReg(X1,y).to_csv("hw2.csv")
-linearReg(X2,y).to_csv("hw2.csv")
+#linearReg(X1,y).to_csv("hw2.csv")
+#linearReg(X2,y).to_csv("hw2.csv")
+
+with open('hw2.csv', 'w') as f:
+    linearReg(X1,y).to_csv(f)
+with open('hw2.csv', 'a') as f:
+    linearReg(X2,y).to_csv(f)
 
 
