@@ -1,10 +1,13 @@
 import pandas as pd
-from sklearn.metrics import accuracy_score,f1_score,roc_auc_score,confusion_matrix,roc_curve
+from sklearn.metrics import accuracy_score,roc_auc_score
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
-
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import plot_confusion_matrix
+import random
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import ConfusionMatrixDisplay
 
 url_data = (r'https://raw.githubusercontent.com/carlson9/KocPythonFall2021/main/inclass/10ML/cses4_cut.csv')
 
@@ -62,9 +65,28 @@ X = pd.get_dummies(data_new, columns = categorical_columns)
 
 X_1 = X.drop(['D2003_99','D2004_9','D2005_9','D2006_9','D2010_9','D2010_99','D2013_9','D2014_9','D2029_999','D2031_9'], axis=1)
 
+for i in range(len(X_1)):
+    if ((X_1["D2023"][i] == 99) & (X_1["D2022"][i] < 99)):
+        # X_1["D2023"][i] = random.randint(0, X_1["D2022"][i])
+        X_1.loc[i, 'D2023'] = random.randint(0, X_1["D2022"][i])
+
+for i in range(len(X_1)):
+    if ((X_1["D2022"][i] == 99) & (X_1["D2021"][i] < 99)):
+        #X_1["D2022"][i] = random.randint(0, X_1["D2021"][i])
+        X_1.loc[i, 'D2022'] = random.randint(0, X_1["D2021"][i])
+
+for i in range(len(X_1)):
+    if ((X_1["D2021"][i] == 99) & (X_1["D2022"][i] < 99)):
+        #X_1["D2021"][i] = random.randint(X_1["D2022"][i], X_1["D2022"][i] + 4)
+        X_1.loc[i, 'D2021'] = random.randint(X_1["D2022"][i], X_1["D2022"][i] + 4)
+
+for i in range(len(X_1)):
+    if ((X_1["D2023"][i] == 99) & (X_1["D2022"][i] < 99)):
+        #X_1["D2023"][i] = random.randint(0, X_1["D2022"][i])
+        X_1.loc[i, 'D2023'] = random.randint(0, X_1["D2022"][i])
+
 y = data["voted"]
 y.replace({True: 1, False: 0}, inplace=True)
-
 
 print(y.value_counts())
 
@@ -74,26 +96,45 @@ dt = DecisionTreeClassifier()
 dt.fit(X_train,y_train)
 y_pred = dt.predict(X_test)
 accuracy_dt = accuracy_score(y_test, y_pred)
-print(accuracy_dt)
+print("Accuracy of Decision Tree:",accuracy_dt)
 auc_dt = roc_auc_score(y_test, y_pred)
-print(auc_dt)
+print("AUC of Decision Tree:",auc_dt)
 
 
 rf = RandomForestClassifier(n_estimators = 10, random_state = 0)
 rf.fit(X_train,y_train)
 y_pred = rf.predict(X_test)
 accuracy_rf = accuracy_score(y_test, y_pred)
-print(accuracy_rf)
-auc = roc_auc_score(y_test, y_pred)
-print(auc)
+print("Accuracy of Random Forest:",accuracy_rf)
+auc_rf = roc_auc_score(y_test, y_pred)
+print("AUC of Random Forest:",auc_rf)
 
 
-xgboost = XGBClassifier()
+xgboost = XGBClassifier(use_label_encoder = False, eval_metric = "auc")
 xgboost.fit(X_train,y_train)
 y_pred = xgboost.predict(X_test)
 accuracy_xgb = accuracy_score(y_test, y_pred)
-print(accuracy_xgb)
+print("Accuracy of XGBoost:",accuracy_xgb)
 auc_xgb = roc_auc_score(y_test, y_pred)
-print(auc_xgb)
+print("AUC of XGBoost:",auc_xgb)
+
+ConfusionMatrixDisplay.from_estimator(xgboost, X_test, y_test)
+
+over = SMOTE(sampling_strategy=0.5)
+X_2, y_1 = over.fit_resample(X_1, y)
+
+X_train_1, X_test_1, y_train_1, y_test_1 = train_test_split(X_2, y_1, random_state=1)
+
+xgboost_2 = XGBClassifier(use_label_encoder = False, eval_metric = "auc")
+xgboost_2.fit(X_train_1,y_train_1)
+y_pred = xgboost_2.predict(X_test_1)
+accuracy_xgb = accuracy_score(y_test_1, y_pred)
+print("Accuracy of XGBoost with Oversampling:",accuracy_xgb)
+auc_xgb = roc_auc_score(y_test_1, y_pred)
+print("AUC of XGBoost with Oversampling:",auc_xgb)
+
+
+ConfusionMatrixDisplay.from_estimator(xgboost_2, X_test_1, y_test_1)
+
 
 
