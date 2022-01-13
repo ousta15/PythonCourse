@@ -4,10 +4,10 @@ from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import plot_confusion_matrix
 import random
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 url_data = (r'https://raw.githubusercontent.com/carlson9/KocPythonFall2021/main/inclass/10ML/cses4_cut.csv')
 
@@ -44,9 +44,10 @@ for i in list3:
 data_new = data[included_columns]
 
 
-# D2027, D2028 çok fazla kategori var ele.
+# eliminating columns of D2027, D2028
 data_new = data_new.drop(['D2027','D2028'], axis=1)
 
+# equalize all unknown data
 for i in data_new.columns:
     if i in list1:
         data_new.loc[data_new[i]>=97,i] = 99
@@ -54,36 +55,62 @@ for i in data_new.columns:
         data_new.loc[data_new[i]>=7,i] = 9
     elif i in list3:
         data_new.loc[data_new[i]>=997,i] = 999
-        
+
+#the value of 96 is not in the questionare script.
 data_new.loc[data_new["D2003"]==96,"D2003"] = 99
 
 categorical_columns = ["D2003","D2004","D2005","D2006","D2010","D2013","D2014","D2029","D2031"]
-
 ordered_columns = ["D2020","D2024","D2025"]
 
 X = pd.get_dummies(data_new, columns = categorical_columns)
 
+#to eliminate perfect multicollinearity
 X_1 = X.drop(['D2003_99','D2004_9','D2005_9','D2006_9','D2010_9','D2010_99','D2013_9','D2014_9','D2029_999','D2031_9'], axis=1)
 
+#feature engineering
 for i in range(len(X_1)):
     if ((X_1["D2023"][i] == 99) & (X_1["D2022"][i] < 99)):
-        # X_1["D2023"][i] = random.randint(0, X_1["D2022"][i])
         X_1.loc[i, 'D2023'] = random.randint(0, X_1["D2022"][i])
 
 for i in range(len(X_1)):
     if ((X_1["D2022"][i] == 99) & (X_1["D2021"][i] < 99)):
-        #X_1["D2022"][i] = random.randint(0, X_1["D2021"][i])
         X_1.loc[i, 'D2022'] = random.randint(0, X_1["D2021"][i])
 
 for i in range(len(X_1)):
     if ((X_1["D2021"][i] == 99) & (X_1["D2022"][i] < 99)):
-        #X_1["D2021"][i] = random.randint(X_1["D2022"][i], X_1["D2022"][i] + 4)
         X_1.loc[i, 'D2021'] = random.randint(X_1["D2022"][i], X_1["D2022"][i] + 4)
 
 for i in range(len(X_1)):
     if ((X_1["D2023"][i] == 99) & (X_1["D2022"][i] < 99)):
-        #X_1["D2023"][i] = random.randint(0, X_1["D2022"][i])
         X_1.loc[i, 'D2023'] = random.randint(0, X_1["D2022"][i])
+
+X_1[(X_1["D2024"]<9) & (X_1["D2025"]<9)][["D2024","D2025"]].corr()
+
+for i in range(len(X_1)):
+    if (X_1["D2024"][i] == 9):
+        if X_1["D2025"][i] == 1:
+            X_1.loc[i, 'D2024'] = random.randint(1, 2)
+        elif X_1["D2025"][i] == 2:
+            X_1.loc[i, 'D2024'] = random.randint(2, 4)
+        elif X_1["D2025"][i] == 3:
+            X_1.loc[i, 'D2024'] = random.randint(2, 4)
+        elif X_1["D2025"][i] == 4:
+            X_1.loc[i, 'D2024'] = random.randint(5, 6)
+
+for i in range(len(X_1)):
+    if (X_1["D2025"][i] == 9):
+        if (X_1["D2024"][i] == 1):
+            X_1.loc[i, 'D2025'] = random.randint(1, 2)
+        elif (X_1["D2024"][i] == 2):
+            X_1.loc[i, 'D2025'] = random.randint(1, 3)
+        elif X_1["D2024"][i] == 3:
+            X_1.loc[i, 'D2025'] = random.randint(2, 3)
+        elif X_1["D2024"][i] == 4:
+            X_1.loc[i, 'D2025'] = random.randint(2, 3)
+        elif X_1["D2024"][i] == 5:
+            X_1.loc[i, 'D2025'] = 3
+        elif X_1["D2024"][i] == 4:
+            X_1.loc[i, 'D2025'] = random.randint(3, 4)
 
 y = data["voted"]
 y.replace({True: 1, False: 0}, inplace=True)
@@ -119,6 +146,7 @@ auc_xgb = roc_auc_score(y_test, y_pred)
 print("AUC of XGBoost:",auc_xgb)
 
 ConfusionMatrixDisplay.from_estimator(xgboost, X_test, y_test)
+plt.show()
 
 over = SMOTE(sampling_strategy=0.5)
 X_2, y_1 = over.fit_resample(X_1, y)
@@ -135,6 +163,7 @@ print("AUC of XGBoost with Oversampling:",auc_xgb)
 
 
 ConfusionMatrixDisplay.from_estimator(xgboost_2, X_test_1, y_test_1)
+plt.show()
 
 
 
