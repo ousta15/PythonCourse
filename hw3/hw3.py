@@ -44,10 +44,13 @@ for i in list3:
 data_new = data[included_columns]
 
 
+categorical_columns = ["D2003","D2004","D2005","D2006","D2010","D2013","D2014","D2029","D2031"]
+ordered_columns = ["D2020","D2024","D2025"]
+
 # eliminating columns of D2027, D2028
 data_new = data_new.drop(['D2027','D2028'], axis=1)
 
-# equalize all unknown data
+# grouping unknown data
 for i in data_new.columns:
     if i in list1:
         data_new.loc[data_new[i]>=97,i] = 99
@@ -59,15 +62,13 @@ for i in data_new.columns:
 #the value of 96 is not in the questionare script.
 data_new.loc[data_new["D2003"]==96,"D2003"] = 99
 
-categorical_columns = ["D2003","D2004","D2005","D2006","D2010","D2013","D2014","D2029","D2031"]
-ordered_columns = ["D2020","D2024","D2025"]
 
 X = pd.get_dummies(data_new, columns = categorical_columns)
 
 #to eliminate perfect multicollinearity
 X_1 = X.drop(['D2003_99','D2004_9','D2005_9','D2006_9','D2010_9','D2010_99','D2013_9','D2014_9','D2029_999','D2031_9'], axis=1)
 
-#feature engineering
+#dealing with missing data for household size
 for i in range(len(X_1)):
     if ((X_1["D2023"][i] == 99) & (X_1["D2022"][i] < 99)):
         X_1.loc[i, 'D2023'] = random.randint(0, X_1["D2022"][i])
@@ -84,7 +85,11 @@ for i in range(len(X_1)):
     if ((X_1["D2023"][i] == 99) & (X_1["D2022"][i] < 99)):
         X_1.loc[i, 'D2023'] = random.randint(0, X_1["D2022"][i])
 
-X_1[(X_1["D2024"]<9) & (X_1["D2025"]<9)][["D2024","D2025"]].corr()
+
+#handling with missing data for religiousity
+print(X_1[(X_1["D2024"]<9) & (X_1["D2025"]<9)][["D2024","D2025"]].corr())
+
+print(X_1[(X_1["D2024"]<9) & (X_1["D2025"]<9)][["D2024","D2025","D2020"]].groupby(["D2024","D2025"]).count())
 
 for i in range(len(X_1)):
     if (X_1["D2024"][i] == 9):
