@@ -6,7 +6,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 
-df=pd.read_csv('zingat_usecase_trainset.csv')
+df=pd.read_csv(r'https://raw.githubusercontent.com/ousta15/PythonCourse/main/final_project/zingat_usecase_trainset.csv')
 df.head()
 
 df[['city', 'distinct','neighbourhood']] = df['path'].str.split('/', 2, expand=True)
@@ -179,7 +179,7 @@ df = df.drop(["car_park"], axis = 1)
 
 # Target Value
 
-df_inflation = pd.read_excel(r'inflation.xlsx')
+df_inflation = pd.read_excel(r'https://raw.githubusercontent.com/ousta15/PythonCourse/main/final_project/inflation.xlsx')
 
 df_inflation['year'] = pd.DatetimeIndex(df_inflation['Date']).year
 df_inflation['month'] = pd.DatetimeIndex(df_inflation['Date']).month
